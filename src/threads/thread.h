@@ -142,6 +142,6 @@ int thread_get_load_avg (void);
 struct list *get_sleep_list(void);
 
 void thread_sleep(int64_t ticks);
-void thread_awake(void);
+void thread_awake(int64_t ticks);
 
 #endif /* threads/thread.h */

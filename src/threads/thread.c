@@ -628,7 +628,7 @@ thread_sleep(int64_t ticks) {
 	enum intr_level old_level;
 	ASSERT(current != idle_thread);
 	//1. 현재 스레드의 wakeup_ticks를 받은 ticks로 수정한다.
-	current->wakeup_time = ticks;
+	current->wakeup_ticks = ticks;
 	//인터럽트 블럭 시작
 	old_level = intr_disable();
 	//2. next_wakeup_ticks를 수정해준다.
@@ -636,29 +636,28 @@ thread_sleep(int64_t ticks) {
 	//3. 현재 스레드를 sleep에 넣어준다.
 	list_push_back(&sleep_list, &current->elem);
 	//4. 현재 스레드를 블럭한다.
-	thread_block(current);
+	thread_block();
 	//인터럽트 블럭 종료
 	intr_set_level(old_level);
 }	
 
 void
-thread_awake(void) {
+thread_awake(int64_t ticks) {
 	//
-	int64_t current_ticks = timer_ticks();
 	struct list_elem *element;
 	struct thread *thd;
-	if (current_ticks < next_wakeup_ticks)
+	if (ticks < next_wakeup_ticks)
 		return;
 	for (element = list_begin(&sleep_list); element != list_end(&sleep_list);
 		element = list_next(element))
 	{
 		thd = list_entry(element, struct thread, elem);
-		if (thd->wakeup_ticks < current_ticks) 
+		if (thd->wakeup_ticks < ticks) 
 		{
 			//1. 리스트에서 블럭을 뺀다.
-			element = list_remove(&thd->element);
+			element = list_remove(&thd->elem);
 			//2. 해당 스레드의 wakeup_ticks를 int64_MAX으로 한다.
-			thd->wakeup_time = INT64_MAX;
+			thd->wakeup_ticks = INT64_MAX;
 			//3. 해당 스레드를 unblock한다.
 			thread_unblock(thd);
 		}
