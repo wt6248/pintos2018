@@ -647,7 +647,7 @@ thread_awake(int64_t ticks) {
 	struct list_elem *element;
 	struct thread *thd;
 	if (ticks < next_wakeup_ticks)
-		return;
+		goto out;
 	for (element = list_begin(&sleep_list); element != list_end(&sleep_list);
 		element = list_next(element))
 	{
@@ -663,4 +663,5 @@ thread_awake(int64_t ticks) {
 		}
 	}
 	set_next_wakeup_ticks_awake();
+	out:
 }
