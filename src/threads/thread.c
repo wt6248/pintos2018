@@ -650,11 +650,10 @@ void
 thread_awake(int64_t ticks) {
 	//
 	struct list_elem *element;
-	struct list_elem *temp;
 	struct thread *thd;
 
 	element = list_begin(&sleep_list);
-	while(element ! = list_end(&sleep_list))
+	while(element != list_end(&sleep_list))
 	{
 		thd = list_entry(element, struct thread, elem);
 		if (thd->wakeup_ticks < ticks)
