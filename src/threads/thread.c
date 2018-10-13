@@ -640,14 +640,17 @@ thread_sleep(int64_t ticks) {
 	//인터럽트 블럭 종료
 	intr_set_level(old_level);
 }	
+int64_t 
+get_next_wakeup_ticks (void)
+{
+	return next_wakeup_ticks;
+}
 
 void
 thread_awake(int64_t ticks) {
 	//
 	struct list_elem *element;
 	struct thread *thd;
-	if (ticks < next_wakeup_ticks)
-		goto out;
 	for (element = list_begin(&sleep_list); element != list_end(&sleep_list);
 		element = list_next(element))
 	{
@@ -663,5 +666,5 @@ thread_awake(int64_t ticks) {
 		}
 	}
 	set_next_wakeup_ticks_awake();
-	out:
+
 }

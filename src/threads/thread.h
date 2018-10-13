@@ -143,5 +143,6 @@ struct list *get_sleep_list(void);
 
 void thread_sleep(int64_t ticks);
 void thread_awake(int64_t ticks);
+void get_next_wakeup_tick(void);
 
 #endif /* threads/thread.h */
