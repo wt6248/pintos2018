@@ -173,8 +173,8 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
   thread_tick ();
-  if (ticks > get_next_wakeup_ticks())
-	thread_awake(timer_ticks());
+  if (ticks >= get_next_wakeup_ticks())
+	thread_awake(ticks);
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer

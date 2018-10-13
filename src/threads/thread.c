@@ -606,21 +606,16 @@ set_next_wakeup_ticks(int64_t tick)
 
 void 
 thread_sleep(int64_t ticks) {
-	//0. 현재 스레드 받는 스레드 변수
-	struct thread *current = thread_current();
+	struct thread *current;
 	enum intr_level old_level;
 	ASSERT(current != idle_thread);
-	//1. 현재 스레드의 wakeup_ticks를 받은 ticks로 수정한다.
-	current->wakeup_ticks = ticks;
-	//인터럽트 블럭 시작
+	
 	old_level = intr_disable();
-	//2. next_wakeup_ticks를 수정해준다.
+	current = thread_current();
+	current->wakeup_ticks = ticks;
 	set_next_wakeup_ticks(ticks);
-	//3. 현재 스레드를 sleep에 넣어준다.
 	list_push_back(&sleep_list, &(current->elem));
-	//4. 현재 스레드를 블럭한다.
 	thread_block();
-	//인터럽트 블럭 종료
 	intr_set_level(old_level);
 }	
 int64_t 
@@ -643,11 +638,8 @@ thread_awake(int64_t ticks) {
 		thd = list_entry(element, struct thread, elem);
 		if (thd->wakeup_ticks < ticks)
 		{
-			//1. 리스트에서 블럭을 뺀다.
 			element = list_remove(&thd->elem);
-			//2. 해당 스레드의 wakeup_ticks를 int64_MAX으로 한다.
 			thd->wakeup_ticks = INT64_MAX;
-			//3. 해당 스레드를 unblock한다.
 			thread_unblock(thd);
 		}
 		else
