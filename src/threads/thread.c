@@ -20,7 +20,11 @@
    of thread.h for details. */
 #define THREAD_MAGIC 0xcd6abf4b
 
-/* List of processes in THREAD_READY state, that is, processes
+	/*List of processes in THREAD_BLOCKED state, that is, processes
+	that are sleeping until timer gets up*/
+static struct list sleep_list;
+
+   /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
 static struct list ready_list;
 
@@ -90,6 +94,7 @@ thread_init (void)
   ASSERT (intr_get_level () == INTR_OFF);
 
   lock_init (&tid_lock);
+  list_init (&sleep_list);
   list_init (&ready_list);
   list_init (&all_list);
 
@@ -463,6 +468,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
+  t->wakeup_ticks = 0;
 
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
