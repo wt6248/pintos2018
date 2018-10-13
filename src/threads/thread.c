@@ -54,6 +54,9 @@ static long long idle_ticks;    /* # of timer ticks spent idle. */
 static long long kernel_ticks;  /* # of timer ticks in kernel threads. */
 static long long user_ticks;    /* # of timer ticks in user programs. */
 
+/* Number of timer ticks when next sleeping_thread will wake up*/
+static int64_t next_wakeup_ticks = INT64_MAX;
+
 /* Scheduling. */
 #define TIME_SLICE 4            /* # of timer ticks to give each thread. */
 static unsigned thread_ticks;   /* # of timer ticks since last yield. */
@@ -74,6 +77,9 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
+
+void set_next_wakeup_ticks_awake(void);
+void set_next_wakeup_ticks(int64_t tick);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -468,7 +474,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
-  t->wakeup_ticks = 0;
+  t->wakeup_ticks = INT64_MAX;
 
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
@@ -584,7 +590,78 @@ allocate_tid (void)
 
   return tid;
 }
-
+
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
+
+
+void
+set_next_wakeup_ticks_awake(void)
+{
+	int64_t lowest_wakeup_ticks = INT64_MAX;
+	int64_t temp_wakeup_ticks = 0;
+	struct list_elem *e;
+	struct thread *t;
+	for (e = list_begin(&sleep_list); e != list_end(&sleep_list);
+		e = list_next(e))
+	{
+		t = list_entry(e, struct thread, elem);
+		temp_wakeup_ticks = t->wakeup_ticks;
+		if ((temp_wakeup_ticks != 0) && (temp_wakeup_ticks < lowest_wakeup_ticks))
+			lowest_wakeup_ticks = temp_wakeup_ticks;
+	}
+	next_wakeup_ticks = lowest_wakeup_ticks;
+}
+
+void
+set_next_wakeup_ticks(int64_t tick)
+{
+	if (next_wakeup_ticks > tick)
+		next_wakeup_ticks = tick;
+}
+
+void 
+thread_sleep(int64_t ticks) {
+	//0. 현재 스레드 받는 스레드 변수
+	struct thread *current = thread_current();
+	enum intr_level old_level;
+	ASSERT(current != idle_thread);
+	//1. 현재 스레드의 wakeup_ticks를 받은 ticks로 수정한다.
+	current->wakeup_time = ticks;
+	//인터럽트 블럭 시작
+	old_level = intr_disable();
+	//2. next_wakeup_ticks를 수정해준다.
+	set_next_wakeup_ticks(ticks);
+	//3. 현재 스레드를 sleep에 넣어준다.
+	list_push_back(&sleep_list, &current->elem);
+	//4. 현재 스레드를 블럭한다.
+	thread_block(current);
+	//인터럽트 블럭 종료
+	intr_set_level(old_level);
+}	
+
+void
+thread_awake(void) {
+	//
+	int64_t current_ticks = timer_ticks();
+	struct list_elem *element;
+	struct thread *thd;
+	if (current_ticks < next_wakeup_ticks)
+		return;
+	for (element = list_begin(&sleep_list); element != list_end(&sleep_list);
+		element = list_next(element))
+	{
+		thd = list_entry(element, struct thread, elem);
+		if (thd->wakeup_ticks < current_ticks) 
+		{
+			//1. 리스트에서 블럭을 뺀다.
+			element = list_remove(&thd->element);
+			//2. 해당 스레드의 wakeup_ticks를 int64_MAX으로 한다.
+			thd->wakeup_time = INT64_MAX;
+			//3. 해당 스레드를 unblock한다.
+			thread_unblock(thd);
+		}
+	}
+	set_next_wakeup_ticks_awake();
+}
