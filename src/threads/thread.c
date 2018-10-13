@@ -55,7 +55,7 @@ static long long kernel_ticks;  /* # of timer ticks in kernel threads. */
 static long long user_ticks;    /* # of timer ticks in user programs. */
 
 /* Number of timer ticks when next sleeping_thread will wake up*/
-static int64_t next_wakeup_ticks = INT64_MAX;
+static int64_t next_wakeup_ticks;
 
 /* Scheduling. */
 #define TIME_SLICE 4            /* # of timer ticks to give each thread. */
@@ -104,11 +104,13 @@ thread_init (void)
   list_init (&ready_list);
   list_init (&all_list);
 
+
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
   init_thread (initial_thread, "main", PRI_DEFAULT);
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
+  next_wakeup_ticks = INT64_MAX;
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.
@@ -600,16 +602,14 @@ void
 set_next_wakeup_ticks_awake(void)
 {
 	int64_t lowest_wakeup_ticks = INT64_MAX;
-	int64_t temp_wakeup_ticks = 0;
 	struct list_elem *e;
 	struct thread *t;
 	for (e = list_begin(&sleep_list); e != list_end(&sleep_list);
 		e = list_next(e))
 	{
 		t = list_entry(e, struct thread, elem);
-		temp_wakeup_ticks = t->wakeup_ticks;
-		if ((temp_wakeup_ticks != 0) && (temp_wakeup_ticks < lowest_wakeup_ticks))
-			lowest_wakeup_ticks = temp_wakeup_ticks;
+		if (t->wakeup_ticks < lowest_wakeup_ticks)
+			lowest_wakeup_ticks = t->wakeup_ticks;
 	}
 	next_wakeup_ticks = lowest_wakeup_ticks;
 }
@@ -634,7 +634,7 @@ thread_sleep(int64_t ticks) {
 	//2. next_wakeup_ticks를 수정해준다.
 	set_next_wakeup_ticks(ticks);
 	//3. 현재 스레드를 sleep에 넣어준다.
-	list_push_back(&sleep_list, &current->elem);
+	list_push_back(&sleep_list, &(current->elem));
 	//4. 현재 스레드를 블럭한다.
 	thread_block();
 	//인터럽트 블럭 종료
@@ -650,12 +650,14 @@ void
 thread_awake(int64_t ticks) {
 	//
 	struct list_elem *element;
+	struct list_elem *temp;
 	struct thread *thd;
-	for (element = list_begin(&sleep_list); element != list_end(&sleep_list);
-		element = list_next(element))
+
+	element = list_begin(&sleep_list);
+	while(element ! = list_end(&sleep_list))
 	{
 		thd = list_entry(element, struct thread, elem);
-		if (thd->wakeup_ticks < ticks) 
+		if (thd->wakeup_ticks < ticks)
 		{
 			//1. 리스트에서 블럭을 뺀다.
 			element = list_remove(&thd->elem);
@@ -663,6 +665,10 @@ thread_awake(int64_t ticks) {
 			thd->wakeup_ticks = INT64_MAX;
 			//3. 해당 스레드를 unblock한다.
 			thread_unblock(thd);
+		}
+		else
+		{
+			element = list_next(element);
 		}
 	}
 	set_next_wakeup_ticks_awake();
