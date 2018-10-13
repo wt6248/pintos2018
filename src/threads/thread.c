@@ -78,7 +78,6 @@ static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 
-void set_next_wakeup_ticks_awake(void);
 void set_next_wakeup_ticks(int64_t tick);
 
 /* Initializes the threading system by transforming the code
@@ -599,22 +598,6 @@ uint32_t thread_stack_ofs = offsetof (struct thread, stack);
 
 
 void
-set_next_wakeup_ticks_awake(void)
-{
-	int64_t lowest_wakeup_ticks = INT64_MAX;
-	struct list_elem *e;
-	struct thread *t;
-	for (e = list_begin(&sleep_list); e != list_end(&sleep_list);
-		e = list_next(e))
-	{
-		t = list_entry(e, struct thread, elem);
-		if (t->wakeup_ticks < lowest_wakeup_ticks)
-			lowest_wakeup_ticks = t->wakeup_ticks;
-	}
-	next_wakeup_ticks = lowest_wakeup_ticks;
-}
-
-void
 set_next_wakeup_ticks(int64_t tick)
 {
 	if (next_wakeup_ticks > tick)
@@ -652,6 +635,8 @@ thread_awake(int64_t ticks) {
 	struct list_elem *element;
 	struct thread *thd;
 
+	next_wakeup_ticks = INT64_MAX;
+
 	element = list_begin(&sleep_list);
 	while(element != list_end(&sleep_list))
 	{
@@ -668,8 +653,8 @@ thread_awake(int64_t ticks) {
 		else
 		{
 			element = list_next(element);
+			if (thd->wakeup_ticks < next_wakeup_ticks)
+				next_wakeup_ticks = thd->wakeup_ticks;
 		}
 	}
-	set_next_wakeup_ticks_awake();
-
 }
