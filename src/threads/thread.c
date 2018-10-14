@@ -618,17 +618,16 @@ thread_sleep(int64_t ticks) {
 	thread_block();
 	intr_set_level(old_level);
 }	
-int64_t 
-get_next_wakeup_ticks (void)
-{
-	return next_wakeup_ticks;
-}
+
 
 void
 thread_awake(int64_t ticks) {
 	//
 	struct list_elem *element;
 	struct thread *thd;
+
+	if (ticks >= next_wakeup_ticks)
+		return;
 
 	next_wakeup_ticks = INT64_MAX;
 
