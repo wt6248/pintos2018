@@ -24,7 +24,7 @@ typedef int tid_t;
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
 
-#define DECIMAL_PART 14                 /* Decides decimal part of int64_t type data */
+#define DECIMAL_PART 10                 /* Decides decimal part of int64_t type data */
 
 /* A kernel thread or user process.
 
@@ -145,5 +145,7 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
+
+void thread_yield_check (void);
 
 #endif /* threads/thread.h */

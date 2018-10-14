@@ -350,6 +350,8 @@ void
 thread_set_nice (int nice) 
 {
   thread_current()->nice = nice;
+  thread_current()->priority = PRI_MAX - thread_get_recent_cpu()/4 - nice*2;
+  thread_yield_check();
 }
 
 /* Returns the current thread's nice value. */
@@ -363,16 +365,20 @@ thread_get_nice (void)
 int
 thread_get_load_avg (void) 
 {
-  /* Not yet implemented. */
-  return 0;
+  int64_t temp = load_avg;
+  for(int i=0; i<DECIMAL_PART; i++)
+    temp/=2;
+  return temp*100;
 }
 
 /* Returns 100 times the current thread's recent_cpu value. */
 int
 thread_get_recent_cpu (void) 
 {
-  /* Not yet implemented. */
-  return 0;
+  int64_t temp = thread_current()->recent_cpu;
+  for(int i=0; i<DECIMAL_PART; i++)
+    temp/=2;
+  return temp*100;
 }
 
 /* Idle thread.  Executes when no other thread is ready to run.
@@ -581,3 +587,8 @@ allocate_tid (void)
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
+
+void thread_yield_check (void)
+{
+
+}
