@@ -256,8 +256,8 @@ thread_unblock (struct thread *t)
   list_insert_ordered(&ready_list, &(t->elem), is_latter_priority_smaller, 0);
   t->status = THREAD_READY;
   intr_set_level (old_level);
-  if ((t->priority > thread_get_priority()) || (t->priority_donated > thread_get_priority()))
-	  thread_yield();
+  //if ((t->priority > thread_get_priority()) || (t->priority_donated > thread_get_priority()))
+//	  thread_yield();
 
 }
 
@@ -327,9 +327,9 @@ thread_yield (void)
 
   old_level = intr_disable ();
   if (cur != idle_thread) 
-  //list_push_back (&ready_list, &cur->elem);
-  list_insert_ordered(&ready_list, &cur->elem, is_latter_priority_smaller, 0);
+	  list_insert_ordered(&ready_list, &cur->elem, is_latter_priority_smaller, 0);
 
+  //list_push_back (&ready_list, &cur->elem);
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -367,7 +367,7 @@ thread_set_priority (int new_priority)
 	cur->priority = new_priority;
 	intr_set_level(old_level);
 
-	if (!list_empty(&ready_list) && (thread_get_priority() < priority_old) )
+	if (!list_empty(&ready_list) && (new_priority < priority_old) )
 		thread_yield();
 }
 
@@ -385,7 +385,7 @@ thread_set_priority_donated(int new_priority)
 	cur->priority_donated = new_priority;
 	intr_set_level(old_level);
 
-	if (thread_get_priority() < priority_old)
+	if (!list_empty(&ready_list) && new_priority < priority_old)
 		thread_yield();
 }
 /* Returns the current thread's priority. */
