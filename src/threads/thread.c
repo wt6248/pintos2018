@@ -79,6 +79,8 @@ void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 
 void set_next_wakeup_ticks(int64_t tick);
+int thread_get_priority_from_thread(struct thread *t);
+
 
 
 /* Initializes the threading system by transforming the code
@@ -357,11 +359,13 @@ thread_set_priority (int new_priority)
 {
 	struct thread *cur = thread_current();
 	int priority_old;
+	enum intr_level old_level;
+
 	ASSERT(!intr_context());
 
 	old_level = intr_disable();
 	priority_old = thread_get_priority();
-	thread_current ()->priority = new_priority;
+	cur->priority = new_priority;
 	intr_set_level(old_level);
 
 	if (thread_get_priority() < priority_old)
@@ -373,11 +377,13 @@ thread_set_priority_donated(int new_priority)
 {
 	struct thread *cur = thread_current();
 	int priority_old;
+	enum intr_level old_level;
+
 	ASSERT(!intr_context());
 
 	old_level = intr_disable();
 	priority_old = thread_get_priority();
-	thread_current()->priority_donated = new_priority;
+	cur->priority_donated = new_priority;
 	intr_set_level(old_level);
 
 	if (thread_get_priority() < priority_old)
@@ -388,12 +394,12 @@ int
 thread_get_priority (void) 
 {
   //return thread_current ()->priority;
-	return 
-		( 
-		(thread_current()->priority > thread_current()->priority_donated) 
-		? thread_current()->priority 
-		: thread_current()->priority_donated
-		) 
+	return
+		(
+		(thread_current()->priority > thread_current()->priority_donated)
+			? thread_current()->priority
+			: thread_current()->priority_donated
+			);
 }
 
 /* Sets the current thread's nice value to NICE. */
@@ -690,13 +696,15 @@ thread_awake(int64_t ticks) {
 		}
 	}
 }
-
+int thread_get_priority_from_thread(struct thread *t) {
+	return ( (t->priority > t->priority_donated) ? t->priority : t->priority_donated );
+}
 
 /*if insert node priority is bigger than before, return true. */
 bool is_latter_priority_smaller(const struct list_elem *inserted, const struct list_elem *before, void *aux UNUSED)
 {
-	return (thread_get_priority(list_entry(inserted, struct thread, elem))
-			> thread_get_priority(list_entry(before, struct thread, elem)))
+	return (thread_get_priority_from_thread(list_entry(inserted, struct thread, elem))
+		> thread_get_priority_from_thread(list_entry(before, struct thread, elem)));
 }
 
 /* priority 큰게 앞으로.
