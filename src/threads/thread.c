@@ -590,5 +590,14 @@ uint32_t thread_stack_ofs = offsetof (struct thread, stack);
 
 void thread_yield_check (void)
 {
-
+  struct thread *cur = thread_current();
+  struct thread *next;
+  if(list_empty(&ready_list))
+    return;
+  else
+  {
+    next = list_front(&ready_list);
+    if(cur->priority < next->priority)
+      thread_yield();
+  }
 }
