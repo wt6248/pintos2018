@@ -200,7 +200,7 @@ thread_create (const char *name, int priority,
 
   /* Add to run queue. */
   thread_unblock (t);
-  
+
   thread_yield_check();
 
   return tid;
@@ -470,7 +470,10 @@ init_thread (struct thread *t, const char *name, int priority)
   t->status = THREAD_BLOCKED;
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
-  t->priority = priority;
+  if(thread_mlfqs==true)
+    t->priority = PRI_MAX - t->nice*2;
+  else
+    t->priority = priority;
   t->magic = THREAD_MAGIC;
 
   old_level = intr_disable ();
