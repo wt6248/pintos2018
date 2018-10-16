@@ -693,7 +693,7 @@ thread_awake(int64_t ticks) {
 
 
 /*if insert node priority is bigger than before, return true. */
-bool is_latter_priority_smaller(const struct list_elem *inserted, elem *before, void UNUSED)
+bool is_latter_priority_smaller(const struct list_elem *inserted, enum *before, void UNUSED)
 {
 	return (thread_get_priority(list_entry(inserted, struct thread, elem))
 			> thread_get_priority(list_entry(before, struct thread, elem)))

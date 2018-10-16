@@ -146,6 +146,6 @@ void thread_sleep(int64_t ticks);
 void thread_awake(int64_t ticks);
 int64_t get_next_wakeup_ticks(void);
 
-bool is_latter_priority_smaller(const struct list_elem *inserted, elem *before, void UNUSED);
+bool is_latter_priority_smaller(const struct list_elem *inserted, enum *before, void UNUSED);
 void thread_set_priority_donated(int new_priority);
 #endif /* threads/thread.h */
