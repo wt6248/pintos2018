@@ -89,7 +89,8 @@ struct thread
     char name[16];                      /* Name (for debugging purposes). */
     uint8_t *stack;                     /* Saved stack pointer. */
     int priority;                       /* Priority. */
-    struct list_elem allelem;           /* List element for all threads list. */
+	int priority_donated;				/*Priority donated*/
+	struct list_elem allelem;           /* List element for all threads list. */
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
@@ -145,4 +146,6 @@ void thread_sleep(int64_t ticks);
 void thread_awake(int64_t ticks);
 int64_t get_next_wakeup_ticks(void);
 
+bool is_latter_priority_smaller(const struct list_elem *inserted, elem *before, void UNUSED);
+void thread_set_priority_donated(int new_priority);
 #endif /* threads/thread.h */
