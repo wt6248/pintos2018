@@ -147,5 +147,6 @@ int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
 void thread_yield_check (void);
+bool thread_priority_sorting (struct list_elem *elem1, struct list_elem *elem2, void *aux);
 
 #endif /* threads/thread.h */
