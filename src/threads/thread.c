@@ -214,7 +214,7 @@ thread_create (const char *name, int priority,
 
   /* Add to run queue. */
   thread_unblock (t);
-  if (priority > thread_get_priority())
+  if (!list_empty(&ready_list) && (priority > thread_get_priority()))
 	  thread_yield();
   return tid;
 }
@@ -328,7 +328,7 @@ thread_yield (void)
   old_level = intr_disable ();
   if (cur != idle_thread) 
   //list_push_back (&ready_list, &cur->elem);
-  list_insert_ordered(&ready_list, &(cur->elem), is_latter_priority_smaller, 0);
+  list_insert_ordered(&ready_list, &cur->elem, is_latter_priority_smaller, 0);
 
   cur->status = THREAD_READY;
   schedule ();
@@ -367,7 +367,7 @@ thread_set_priority (int new_priority)
 	cur->priority = new_priority;
 	intr_set_level(old_level);
 
-	if (thread_get_priority() < priority_old)
+	if (!list_empty(&ready_list) && (thread_get_priority() < priority_old) )
 		thread_yield();
 }
 
