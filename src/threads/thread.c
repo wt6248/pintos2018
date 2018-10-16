@@ -79,7 +79,6 @@ void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 
 void set_next_wakeup_ticks(int64_t tick);
-int thread_get_priority_from_thread(struct thread *t);
 
 
 

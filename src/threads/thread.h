@@ -148,4 +148,5 @@ int64_t get_next_wakeup_ticks(void);
 
 bool is_latter_priority_smaller(const struct list_elem *inserted, const struct list_elem *before, void *aux UNUSED);
 void thread_set_priority_donated(int new_priority);
+int thread_get_priority_from_thread(struct thread *t);
 #endif /* threads/thread.h */

@@ -197,8 +197,8 @@ lock_acquire (struct lock *lock)
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
   if ((lock->holder != NULL) &&
-	  ((lock->holder->priority < thread_get_priority(void)) || (lock->holder->priority_donated < thread_get_priority(void))))
-	  thread_set_priority_donated( thread_get_priority(void) );
+	  ((lock->holder->priority < thread_get_priority()) || (lock->holder->priority_donated < thread_get_priority())))
+	  thread_set_priority_donated( thread_get_priority() );
 
   sema_down (&lock->semaphore);
   lock->holder = thread_current ();
